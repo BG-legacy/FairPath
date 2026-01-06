@@ -386,6 +386,21 @@ class ResumeService:
             and skill.lower() not in generic_skills
         ]
         
+        # Skills in resume that aren't in target (extra/irrelevant)
+        extra_skills = [
+            skill for skill in resume_skills 
+            if skill.lower() not in target_skills_set
+        ]
+        
+        # Calculate coverage percentage
+        if target_important_set:
+            coverage = (len([s for s in resume_skills if s.lower() in target_important_set]) / len(target_important_set)) * 100
+        else:
+            coverage = 0.0
+        
+        # Use user's original input name if provided, otherwise use catalog name
+        display_name = user_career_name if user_career_name else target_catalog.occupation.name
+        
         # Use OpenAI to generate comprehensive gap analysis if available
         if self.openai_service.is_available():
             openai_analysis = self._generate_openai_gap_analysis(
@@ -425,21 +440,6 @@ class ResumeService:
         # Fallback to catalog-based analysis if OpenAI is not available
         # Limit to top 20 most relevant missing skills
         missing_skills = missing_skills_filtered[:20]
-        
-        # Skills in resume that aren't in target (extra/irrelevant)
-        extra_skills = [
-            skill for skill in resume_skills 
-            if skill.lower() not in target_skills_set
-        ]
-        
-        # Calculate coverage percentage
-        if target_important_set:
-            coverage = (len([s for s in resume_skills if s.lower() in target_important_set]) / len(target_important_set)) * 100
-        else:
-            coverage = 0.0
-        
-        # Use user's original input name if provided, otherwise use catalog name
-        display_name = user_career_name if user_career_name else target_catalog.occupation.name
         
         return {
             "target_career": {
