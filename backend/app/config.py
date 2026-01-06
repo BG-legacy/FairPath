@@ -3,9 +3,9 @@ Config stuff - loading env vars and setting defaults
 I'm using pydantic-settings to handle this, makes it easier
 """
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic import ConfigDict, field_validator
 from typing import List
-import os
+import json
 
 class Settings(BaseSettings):
     # OpenAI key - required for AI features
@@ -20,13 +20,74 @@ class Settings(BaseSettings):
     
     # CORS - allowing localhost and common frontend ports
     # Add your frontend URL here or in .env
+    # Can be set as JSON array or comma-separated string
     CORS_ORIGINS: List[str] = [
+        "https://fair-path.vercel.app",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:8080",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
     ]
+    
+    @field_validator('CORS_ORIGINS', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ORIGINS from JSON string, comma-separated string, or list"""
+        # If already a list, strip trailing slashes and return
+        if isinstance(v, list):
+            return [origin.rstrip('/') if isinstance(origin, str) else origin for origin in v]
+        
+        # Handle None or empty values
+        if v is None:
+            return []
+        
+        # Handle string values
+        if isinstance(v, str):
+            v = v.strip()
+            # Empty string returns default list
+            if not v:
+                return [
+                    "https://fair-path.vercel.app",
+                    "http://localhost:3000",
+                    "http://localhost:5173",
+                    "http://localhost:8080",
+                    "http://127.0.0.1:3000",
+                    "http://127.0.0.1:5173",
+                ]
+            
+            # Try to parse as JSON first (if it looks like JSON)
+            if v.startswith('['):
+                try:
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        # Strip trailing slashes from JSON origins too
+                        return [origin.rstrip('/') if isinstance(origin, str) else origin for origin in parsed]
+                except (json.JSONDecodeError, ValueError):
+                    # If JSON parsing fails, fall through to comma-separated parsing
+                    pass
+            
+            # Treat as comma-separated string
+            # Strip trailing slashes from origins (CORS doesn't accept them)
+            origins = [origin.strip().rstrip('/') for origin in v.split(',') if origin.strip()]
+            return origins if origins else [
+                "https://fair-path.vercel.app",
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:8080",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:5173",
+            ]
+        
+        # Fallback: return default
+        return [
+            "https://fair-path.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:8080",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+        ]
     
     # Database stuff if needed later
     DATABASE_URL: str = "sqlite:///./data/app.db"
@@ -57,10 +118,4 @@ class Settings(BaseSettings):
 
 # creating a singleton instance - I'll use this everywhere
 settings = Settings()
-
-# adding custom origins from env if they exist
-# This way you can override in .env without changing code
-if os.getenv("CORS_ORIGINS"):
-    custom_origins = os.getenv("CORS_ORIGINS").split(",")
-    settings.CORS_ORIGINS.extend([origin.strip() for origin in custom_origins])
 
