@@ -30,8 +30,14 @@ class GuardrailsService:
     
     def __init__(self):
         self.recommendation_service = CareerRecommendationService()
-        # Try to load model
-        self.recommendation_service.load_model_artifacts()
+        # Don't load models in __init__ - load lazily on first use to save memory
+        self._model_loaded = False
+    
+    def _ensure_model_loaded(self):
+        """Lazy-load model artifacts only when needed"""
+        if not self._model_loaded:
+            self.recommendation_service.load_model_artifacts()
+            self._model_loaded = True
     
     def check_demographic_features(
         self,
@@ -421,6 +427,10 @@ class GuardrailsService:
             effective_top_n = self.DEFAULT_RECOMMENDATIONS
         
         # Get recommendations from underlying service
+        # Ensure model is loaded if ML is being used
+        if use_ml:
+            self._ensure_model_loaded()
+        
         try:
             result = self.recommendation_service.recommend(
                 skills=skills,

@@ -140,23 +140,23 @@ def _get_git_commit() -> str:
 
 
 def _check_model_loaded() -> bool:
-    """Check if ML model is loaded"""
+    """Check if ML model files exist (lightweight check, doesn't load models)"""
     try:
-        from services.recommendation_service import CareerRecommendationService
-        service = CareerRecommendationService()
-        service.load_model_artifacts()
-        return service.ml_model is not None
+        artifacts_dir = Path(__file__).parent.parent / "artifacts" / "models"
+        # Check if model files exist without loading them
+        model_file = list(artifacts_dir.glob("career_model_v*.pkl"))
+        scaler_file = list(artifacts_dir.glob("scaler_v*.pkl"))
+        metadata_file = list(artifacts_dir.glob("model_metadata_v*.json"))
+        return len(model_file) > 0 and len(scaler_file) > 0 and len(metadata_file) > 0
     except Exception:
         return False
 
 
 def _check_data_loaded() -> bool:
-    """Check if processed data is loaded"""
+    """Check if processed data file exists (lightweight check, doesn't load data)"""
     try:
-        from services.data_processing import DataProcessingService
-        service = DataProcessingService()
-        processed_data = service.load_processed_data()
-        return processed_data is not None
+        processed_data_file = Path(__file__).parent.parent / "artifacts" / "processed_data.json"
+        return processed_data_file.exists() and processed_data_file.stat().st_size > 0
     except Exception:
         return False
 
