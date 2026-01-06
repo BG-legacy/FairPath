@@ -1,0 +1,133 @@
+[
+  {
+    "file_name": "Occupation Data.txt",
+    "file_type": "O*NET",
+    "description": "O*NET occupation catalog with titles and descriptions",
+    "columns": [
+      {
+        "name": "O*NET-SOC Code",
+        "description": "O*NET Standard Occupational Classification code",
+        "type": "str"
+      },
+      {
+        "name": "Title",
+        "description": "Occupation title",
+        "type": "str"
+      },
+      {
+        "name": "Description",
+        "description": "Detailed occupation description",
+        "type": "str"
+      }
+    ],
+    "source": "O*NET 30.1 Database",
+    "last_updated": "2025-12"
+  },
+  {
+    "file_name": "Skills.txt",
+    "file_type": "O*NET",
+    "description": "Skills ratings for occupations (importance and level)",
+    "columns": [
+      {
+        "name": "O*NET-SOC Code",
+        "description": "O*NET SOC code",
+        "type": "str"
+      },
+      {
+        "name": "Element ID",
+        "description": "O*NET element identifier",
+        "type": "str"
+      },
+      {
+        "name": "Element Name",
+        "description": "Skill name",
+        "type": "str"
+      },
+      {
+        "name": "Scale ID",
+        "description": "IM (Importance) or LV (Level)",
+        "type": "str"
+      },
+      {
+        "name": "Data Value",
+        "description": "Rating value (0-5 for IM, 0-7 for LV)",
+        "type": "float"
+      }
+    ],
+    "source": "O*NET 30.1 Database",
+    "last_updated": "2025-12"
+  },
+  {
+    "file_name": "Task Statements.txt",
+    "file_type": "O*NET",
+    "description": "Task statements for occupations",
+    "columns": [
+      {
+        "name": "O*NET-SOC Code",
+        "description": "O*NET SOC code",
+        "type": "str"
+      },
+      {
+        "name": "Task ID",
+        "description": "Unique task identifier",
+        "type": "str"
+      },
+      {
+        "name": "Task",
+        "description": "Task description",
+        "type": "str"
+      },
+      {
+        "name": "Task Type",
+        "description": "Core or Supplemental",
+        "type": "str"
+      },
+      {
+        "name": "Incumbents Responding",
+        "description": "Number of incumbents who responded",
+        "type": "int"
+      }
+    ],
+    "source": "O*NET 30.1 Database",
+    "last_updated": "2025-12"
+  },
+  {
+    "file_name": "occupation.xlsx",
+    "file_type": "BLS",
+    "description": "BLS employment projections and wage data by occupation",
+    "columns": [
+      {
+        "name": "2024 National Employment Matrix title",
+        "description": "Occupation title",
+        "type": "str"
+      },
+      {
+        "name": "Employment 2024",
+        "description": "Employment in 2024 (thousands)",
+        "type": "int"
+      },
+      {
+        "name": "Employment 2034",
+        "description": "Projected employment in 2034 (thousands)",
+        "type": "int"
+      },
+      {
+        "name": "Change 2024-2034",
+        "description": "Change in employment (thousands)",
+        "type": "int"
+      },
+      {
+        "name": "Percent change",
+        "description": "Percent change 2024-2034",
+        "type": "float"
+      },
+      {
+        "name": "Median annual wage 2024",
+        "description": "Median annual wage in dollars",
+        "type": "float"
+      }
+    ],
+    "source": "BLS Employment Projections 2024-2034",
+    "last_updated": "2024"
+  }
+]

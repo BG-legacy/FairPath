@@ -45,7 +45,10 @@ data/*.sqlite
 data/*.sqlite3
 
 # Artifacts
-artifacts/*
+# Allow model files and data files for deployment (needed for Heroku/Render)
+artifacts/feedback/
+!artifacts/models/
+!artifacts/*.json
 
 # OS
 .DS_Store

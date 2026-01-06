@@ -15,7 +15,9 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str =  "gpt-4o-mini" # Model name for OpenAI API calls (gpt-4o-mini, gpt-4o, gpt-3.5-turbo)
     
     # Server config
-    PORT: int = 8000
+    # PORT is read from environment (Heroku sets this automatically)
+    # Default to 8000 for local development
+    PORT: int = Field(default=8000, description="Server port (set by Heroku automatically)")
     ENV_MODE: str = "development"  # development, production, testing
     
     # CORS - allowing localhost and common frontend ports

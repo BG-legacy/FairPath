@@ -148,7 +148,93 @@ CORS is configured to allow requests from:
 
 ## Deployment
 
-### Render (Native Python Deployment - Recommended)
+### Heroku (Recommended)
+
+Heroku is a great platform for deploying Python applications. The backend is already configured for Heroku deployment.
+
+#### Prerequisites
+
+1. **Install Heroku CLI**: Download from [heroku.com](https://devcenter.heroku.com/articles/heroku-cli)
+2. **Login to Heroku**:
+   ```bash
+   heroku login
+   ```
+
+#### Deployment Steps
+
+1. **Navigate to backend directory**:
+   ```bash
+   cd backend
+   ```
+
+2. **Create a Heroku app** (if you haven't already):
+   ```bash
+   heroku create your-app-name
+   ```
+   Or use an existing app:
+   ```bash
+   heroku git:remote -a your-app-name
+   ```
+
+3. **Set environment variables** in Heroku dashboard or via CLI:
+   ```bash
+   heroku config:set OPENAI_API_KEY=your_openai_api_key_here
+   heroku config:set ENV_MODE=production
+   heroku config:set EAGER_LOAD_MODELS=false
+   heroku config:set CORS_ORIGINS=https://your-frontend-url.com
+   ```
+   
+   **Note**: `PORT` is automatically set by Heroku - don't override it.
+
+4. **Deploy to Heroku**:
+   ```bash
+   git add .
+   git commit -m "Deploy to Heroku"
+   git push heroku main
+   ```
+   (Use `master` instead of `main` if that's your default branch)
+
+5. **Check deployment status**:
+   ```bash
+   heroku logs --tail
+   ```
+
+6. **Open your app**:
+   ```bash
+   heroku open
+   ```
+
+#### Heroku Configuration
+
+- **Procfile**: Already configured to run `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1`
+- **runtime.txt**: Specifies Python 3.11.9
+- **requirements.txt**: All dependencies are listed
+- **Artifacts**: Model files and data files are included in the repository
+
+#### Environment Variables for Heroku
+
+Set these in the Heroku dashboard (Settings → Config Vars) or via CLI:
+
+- `OPENAI_API_KEY` - **Required** - Your OpenAI API key
+- `ENV_MODE=production` - Set to production mode
+- `EAGER_LOAD_MODELS=false` - Recommended to save memory (models load on first request)
+- `CORS_ORIGINS` - Your frontend URL(s), comma-separated (e.g., `https://your-frontend.vercel.app`)
+- `PORT` - **Automatically set by Heroku** - Don't override this
+
+#### Memory Optimization
+
+For Heroku's free tier (512MB), it's recommended to:
+- Set `EAGER_LOAD_MODELS=false` (default) - Models load lazily on first request
+- Use 1 worker (already configured in Procfile)
+
+#### Troubleshooting
+
+- **View logs**: `heroku logs --tail`
+- **Check app status**: `heroku ps`
+- **Restart app**: `heroku restart`
+- **Run commands**: `heroku run python -m pytest` (for testing)
+
+### Render (Native Python Deployment - Alternative)
 
 For Render, you can deploy directly without Docker to save memory:
 
