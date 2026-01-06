@@ -146,3 +146,29 @@ CORS is configured to allow requests from:
 - localhost:8080
 - Any origins specified in `CORS_ORIGINS` env variable
 
+## Deployment
+
+### Render (Native Python Deployment - Recommended)
+
+For Render, you can deploy directly without Docker to save memory:
+
+1. **Create a new Web Service** on Render
+2. **Connect your repository** and set the root directory to `backend/`
+3. **Build Command**: `pip install -r requirements.txt` (or leave blank - Render auto-detects)
+4. **Start Command**: Render will automatically use the `Procfile` which runs:
+   ```
+   uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+   ```
+5. **Environment Variables**: Set these in Render's dashboard:
+   - `OPENAI_API_KEY` - Your OpenAI API key
+   - `ENV_MODE=production`
+   - `EAGER_LOAD_MODELS=false` (recommended for 512MB free tier)
+   - `CORS_ORIGINS` - Your frontend URL(s)
+   - `PORT` - Automatically set by Render (don't override)
+
+**Note**: The `Procfile` and `runtime.txt` files are included for native Python deployment. This avoids Docker overhead and reduces memory usage.
+
+### Docker Deployment (Alternative)
+
+If you prefer Docker, use `Dockerfile.prod` and set the Dockerfile path in Render's settings.
+
