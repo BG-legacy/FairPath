@@ -1,0 +1,78 @@
+/**
+ * Validation Error Display Styles
+ */
+
+.validation-error-display {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.validation-error-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #fca5a5;
+}
+
+.validation-error-icon {
+  font-size: 1.25rem;
+}
+
+.validation-error-title {
+  font-size: 0.875rem;
+}
+
+.validation-error-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.validation-error-item {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.validation-error-item:last-child {
+  border-bottom: none;
+}
+
+.validation-error-field {
+  font-weight: 500;
+  color: #fca5a5;
+  min-width: 120px;
+  font-size: 0.875rem;
+}
+
+.validation-error-message {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+/* Field Error (Inline) */
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+  color: #fca5a5;
+  font-size: 0.75rem;
+}
+
+.field-error-icon {
+  font-size: 0.875rem;
+}
+
+.field-error-text {
+  flex: 1;
+}
+
+

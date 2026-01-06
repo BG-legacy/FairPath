@@ -1,0 +1,82 @@
+# FairPath Frontend
+
+React + TypeScript + Vite frontend application for FairPath.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm (or yarn/pnpm)
+
+### Installation
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+### Development
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`
+
+### Building for Production
+
+Build the production bundle:
+
+```bash
+npm run build
+```
+
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+## Configuration
+
+The frontend is configured to connect to the backend API running on `http://localhost:8000` by default.
+
+You can override this by creating a `.env` file:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── api/           # API client configuration
+│   ├── pages/         # Page components
+│   ├── components/    # Reusable components
+│   ├── App.tsx        # Main app component
+│   ├── main.tsx       # Entry point
+│   └── index.css      # Global styles
+├── public/            # Static assets
+├── index.html         # HTML template
+└── vite.config.ts     # Vite configuration
+```
+
+## Features
+
+- ⚡ Fast HMR (Hot Module Replacement)
+- 🎯 TypeScript for type safety
+- 🛣️ React Router for routing
+- 🔌 Axios for API calls
+- 🎨 Modern CSS styling
+
+## Backend Integration
+
+The frontend communicates with the FastAPI backend running on port 8000. The Vite dev server is configured with a proxy to forward `/api` requests to the backend.
+
+Make sure the backend server is running before starting the frontend for full functionality.
+
+

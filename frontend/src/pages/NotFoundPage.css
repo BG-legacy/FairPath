@@ -1,0 +1,125 @@
+.not-found-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+}
+
+.not-found-container {
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+}
+
+.not-found-code {
+  font-size: 8rem;
+  font-weight: bold;
+  margin: 0;
+  background: linear-gradient(135deg, #646cff 0%, #535bf2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.not-found-title {
+  font-size: 2rem;
+  margin: 1rem 0;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.not-found-message {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.not-found-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.not-found-button {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-weight: 500;
+}
+
+.not-found-button.primary {
+  background-color: #646cff;
+  color: white;
+}
+
+.not-found-button.primary:hover {
+  background-color: #535bf2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+}
+
+.not-found-button.secondary {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.87);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.not-found-button.secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+@media (prefers-color-scheme: light) {
+  .not-found-page {
+    background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+  }
+
+  .not-found-title {
+    color: #213547;
+  }
+
+  .not-found-message {
+    color: #666;
+  }
+
+  .not-found-button.secondary {
+    color: #213547;
+    border-color: #e0e0e0;
+  }
+
+  .not-found-button.secondary:hover {
+    background-color: #f0f0f0;
+    border-color: #d0d0d0;
+  }
+}
+
+@media (max-width: 768px) {
+  .not-found-code {
+    font-size: 5rem;
+  }
+
+  .not-found-title {
+    font-size: 1.5rem;
+  }
+
+  .not-found-message {
+    font-size: 1rem;
+  }
+
+  .not-found-actions {
+    flex-direction: column;
+  }
+
+  .not-found-button {
+    width: 100%;
+  }
+}
+
+

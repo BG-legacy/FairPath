@@ -1,0 +1,203 @@
+.landing-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  background-color: #000000;
+  overflow: hidden;
+}
+
+/* Subtle grid pattern */
+.landing-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.particles-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.landing-content {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.title-container {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.landing-title {
+  font-size: 4.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  font-family: 'Times New Roman', Times, serif;
+  display: inline-block;
+}
+
+.cursor {
+  display: inline-block;
+  margin-left: 0.1em;
+  color: #ffffff;
+  animation: blink 1s infinite;
+  font-weight: 100;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.tagline {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Times New Roman', Times, serif;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  min-height: 2rem;
+  display: inline-block;
+}
+
+.landing-footer {
+  position: relative;
+  padding-bottom: 3rem;
+  z-index: 2;
+}
+
+.start-button {
+  background-color: transparent;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Times New Roman', Times, serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.start-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  transition: left 0.3s ease;
+  z-index: -1;
+}
+
+.start-button:hover {
+  color: #000000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.start-button:hover::before {
+  left: 0;
+}
+
+.start-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .landing-page {
+    padding: 1.5rem;
+  }
+
+  .landing-title {
+    font-size: 2.5rem;
+    letter-spacing: 0.05em;
+  }
+
+  .tagline {
+    font-size: 1.1rem;
+  }
+  
+  .start-button {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-title {
+    font-size: 2rem;
+  }
+
+  .tagline {
+    font-size: 0.9rem;
+  }
+
+  .title-container {
+    gap: 1rem;
+  }
+
+  .start-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Ensure background stays black regardless of color scheme */
+@media (prefers-color-scheme: light) {
+  .landing-page {
+    background-color: #000000;
+  }
+
+  .landing-title {
+    color: #ffffff;
+  }
+
+  .start-button {
+    color: #ffffff;
+    border-color: #ffffff;
+  }
+}
+
