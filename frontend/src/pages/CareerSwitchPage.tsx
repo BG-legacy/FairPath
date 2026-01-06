@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CareerSwitchPage.css';
 import careerSwitchService, { CareerSwitchFormatted } from '../services/careerSwitch';
-import dataService from '../services/data';
 
 interface Particle {
   x: number;

@@ -578,6 +578,17 @@ function ResumePage(): JSX.Element {
                   }
                 }}
               />
+              {isValidatingRewriteCareer && (
+                <div className="search-loading">Validating career with AI...</div>
+              )}
+              {rewriteValidatedCareer && !isValidatingRewriteCareer && rewriteTargetCareerName.trim() && (
+                <div className="selected-career" style={{ marginTop: '8px', color: '#4CAF50' }}>
+                  <span>✓ Using: {rewriteTargetCareerName}</span>
+                </div>
+              )}
+              {rewriteCareerValidationError && !isValidatingRewriteCareer && (
+                <div className="error-message" style={{ marginTop: '8px' }}>{rewriteCareerValidationError}</div>
+              )}
               <div className="form-hint" style={{ marginTop: '4px', fontSize: '0.875rem', color: '#666' }}>
                 Your exact input will be used for rewriting.
               </div>
