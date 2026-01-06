@@ -963,7 +963,8 @@ class CareerRecommendationService:
     
     def load_model_artifacts(self, version: Optional[str] = None) -> bool:
         """
-        Load model artifacts from disk
+        Load model artifacts from disk (model, scaler, vectorizer only).
+        This does NOT load processed data - that loads separately via load_processed_data().
         Returns True if successful, False otherwise
         """
         model_dir = self.artifacts_dir / "models"

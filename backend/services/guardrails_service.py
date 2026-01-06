@@ -34,7 +34,11 @@ class GuardrailsService:
         self._model_loaded = False
     
     def _ensure_model_loaded(self):
-        """Lazy-load model artifacts only when needed"""
+        """
+        Lazy-load model artifacts only when needed.
+        This loads ONLY the ML model, scaler, and vectorizer - NOT processed data.
+        Processed data loads separately and lazily when actually needed for recommendations.
+        """
         if not self._model_loaded:
             self.recommendation_service.load_model_artifacts()
             self._model_loaded = True

@@ -73,9 +73,15 @@ async def startup_event():
     
     Can be disabled via EAGER_LOAD_MODELS=False to save memory in constrained environments
     """
+    # Log that server is starting - this helps with deployment monitoring
+    import os
+    port = os.getenv("PORT", "8000")
+    logger.info(f"Server starting on port {port}")
+    
     if not settings.EAGER_LOAD_MODELS:
         logger.info("Eager loading disabled (EAGER_LOAD_MODELS=False) - models will load on first request")
         logger.info("This reduces memory usage at startup")
+        logger.info("Server ready to accept requests")
         return
     
     logger.info("Starting up - preloading models and warming caches...")

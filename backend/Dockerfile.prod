@@ -46,7 +46,8 @@ RUN chmod +x /app/start.sh
 # Switch to non-root user
 USER appuser
 
-# Expose port (Render will use PORT env var, but we expose 8000 as default)
+# Expose port (Render sets PORT env var dynamically)
+# EXPOSE is just documentation - actual port binding happens at runtime via start.sh
 EXPOSE 8000
 
 # Set environment variables
