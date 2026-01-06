@@ -115,7 +115,7 @@ Be honest about fit - don't force matches. Prioritize careers that actually USE 
                         },
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=1500,
+                    max_tokens=1500,
                     temperature=0.7,
                     response_format={"type": "json_object"}
                 )

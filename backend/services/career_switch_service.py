@@ -498,7 +498,7 @@ Return ONLY valid JSON, no other text."""
                             {"role": "system", "content": "You're a career transition expert. Provide detailed, realistic career switch analysis in JSON format only."},
                             {"role": "user", "content": prompt}
                         ],
-                        max_completion_tokens=2000,
+                        max_tokens=2000,
                         temperature=0.5,
                         response_format={"type": "json_object"}
                     )
@@ -516,7 +516,7 @@ Return ONLY valid JSON, no other text."""
                             {"role": "system", "content": "You're a career transition expert. Provide detailed, realistic career switch analysis in JSON format only. Return ONLY valid JSON, no markdown, no code blocks."},
                             {"role": "user", "content": prompt}
                         ],
-                        max_completion_tokens=2000,
+                        max_tokens=2000,
                         temperature=0.5
                     )
                 )

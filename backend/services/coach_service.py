@@ -204,7 +204,7 @@ Return ONLY valid JSON, no other text."""
                         {"role": "system", "content": "You're an expert career coach. Provide detailed, actionable coaching plans in JSON format only. Be specific, realistic, and encouraging."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=4000,
+                    max_tokens=4000,
                     temperature=0.7,
                     response_format={"type": "json_object"}
                 )
@@ -217,7 +217,7 @@ Return ONLY valid JSON, no other text."""
                         {"role": "system", "content": "You're an expert career coach. Provide detailed, actionable coaching plans in JSON format only. Return ONLY valid JSON, no markdown, no code blocks."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=4000,
+                    max_tokens=4000,
                     temperature=0.7
                 )
             

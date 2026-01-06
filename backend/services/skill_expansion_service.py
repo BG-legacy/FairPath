@@ -137,7 +137,7 @@ Return ONLY the JSON, no explanations."""
                         },
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=800,
+                    max_tokens=800,
                     temperature=0.3,  # Lower temperature for more consistent mappings
                     response_format={"type": "json_object"}
                 )

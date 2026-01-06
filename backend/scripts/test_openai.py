@@ -28,14 +28,14 @@ def test_openai():
         model = settings.OPENAI_MODEL
         print(f"Using model: {model}")
         print("Making test API call...")
-        # gpt-5.2 uses max_completion_tokens instead of max_tokens
+        # Use max_tokens for OpenAI API
         response = client.chat.completions.create(
             model=model,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": "Say 'Hello, OpenAI API is working!' if you can read this."}
             ],
-            max_completion_tokens=50
+            max_tokens=50
         )
         
         message = response.choices[0].message.content

@@ -115,7 +115,7 @@ Keep it casual and encouraging, like you're talking to a friend."""
                         {"role": "system", "content": "You're a helpful career advisor. Give friendly, practical advice."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=200,
+                    max_tokens=200,
                     temperature=0.7
                 )
             )
@@ -186,7 +186,7 @@ Keep response very short."""
                         {"role": "system", "content": "You're a career matching expert. Be concise."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=50,
+                    max_tokens=50,
                     temperature=0.3
                 )
             )
@@ -273,7 +273,7 @@ Be specific with career titles."""
                         {"role": "system", "content": "You're a career matching expert. Suggest careers that genuinely fit the user profile."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=100,
+                    max_tokens=100,
                     temperature=0.5
                 )
             )
@@ -389,7 +389,7 @@ If a career name is close but not exact, use the closest match from the list."""
                         {"role": "system", "content": "You're a career matching expert. Recommend careers that genuinely fit the user profile based on skills, interests, values, and constraints."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=200,
+                    max_tokens=200,
                     temperature=0.6
                 )
             )
@@ -517,7 +517,7 @@ If no good matches, respond with "NO_MATCHES"."""
                         {"role": "system", "content": "You're a career search assistant. Help users find careers by matching their search query to available careers. Be thorough and consider various interpretations of the query."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=500,
+                    max_tokens=500,
                     temperature=0.5
                 )
             )
@@ -608,7 +608,7 @@ Make it casual and encouraging."""
                         {"role": "system", "content": "You're a friendly career advisor."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=100,
+                    max_tokens=100,
                     temperature=0.7
                 )
             )
@@ -687,7 +687,7 @@ If no good match exists, respond with "NO_MATCH"."""
                         {"role": "system", "content": "You're a career search assistant. Find the single best matching career from the provided list. Be precise and match the exact career name."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=200,
+                    max_tokens=200,
                     temperature=0.3  # Lower temperature for more precise matching
                 )
             )
@@ -823,7 +823,7 @@ Be specific with certification names and providers. Return ONLY valid JSON, no o
                         {"role": "system", "content": "You're a career certification expert. Provide accurate, specific certification recommendations in JSON format only."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_completion_tokens=500,
+                    max_tokens=500,
                     temperature=0.5,
                     response_format={"type": "json_object"}
                 )
@@ -838,7 +838,7 @@ Be specific with certification names and providers. Return ONLY valid JSON, no o
                             {"role": "system", "content": "You're a career certification expert. Provide accurate, specific certification recommendations in JSON format only. Return ONLY valid JSON, no markdown, no code blocks."},
                             {"role": "user", "content": prompt}
                         ],
-                        max_completion_tokens=500,
+                        max_tokens=500,
                         temperature=0.5
                     )
                 )
