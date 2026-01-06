@@ -481,12 +481,51 @@ function ResumePage(): JSX.Element {
                     <div className="error-message">{analysisResults.gap_analysis.error}</div>
                   ) : (
                     <>
+                      {analysisResults.gap_analysis.target_career && (
+                        <div className="gap-section">
+                          <p className="gap-info">
+                            Analyzing gaps for: <strong>{analysisResults.gap_analysis.target_career.name}</strong>
+                            {analysisResults.gap_analysis.coverage_percentage !== undefined && (
+                              <span className="coverage-badge">
+                                {analysisResults.gap_analysis.coverage_percentage.toFixed(1)}% coverage
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      {analysisResults.gap_analysis.missing_important_skills && analysisResults.gap_analysis.missing_important_skills.length > 0 && (
+                        <div className="gap-section">
+                          <h4 className="gap-title">Missing Important Skills (High Priority):</h4>
+                          <div className="skills-grid">
+                            {analysisResults.gap_analysis.missing_important_skills.map((skill, index) => (
+                              <div key={index} className="skill-item missing important">
+                                {skill}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {analysisResults.gap_analysis.missing_skills && analysisResults.gap_analysis.missing_skills.length > 0 && (
                         <div className="gap-section">
-                          <h4 className="gap-title">Missing Skills:</h4>
+                          <h4 className="gap-title">Other Missing Skills:</h4>
+                          <p className="gap-note">
+                            <small>Note: Generic skills (like "Reading Comprehension", "Active Listening") have been filtered out to show only relevant, actionable skills.</small>
+                          </p>
                           <div className="skills-grid">
                             {analysisResults.gap_analysis.missing_skills.map((skill, index) => (
                               <div key={index} className="skill-item missing">
+                                {skill}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {analysisResults.gap_analysis.matching_skills && analysisResults.gap_analysis.matching_skills.length > 0 && (
+                        <div className="gap-section">
+                          <h4 className="gap-title">Matching Skills:</h4>
+                          <div className="skills-grid">
+                            {analysisResults.gap_analysis.matching_skills.map((skill, index) => (
+                              <div key={index} className="skill-item matching">
                                 {skill}
                               </div>
                             ))}
@@ -517,6 +556,12 @@ function ResumePage(): JSX.Element {
                               </li>
                             ))}
                           </ul>
+                        </div>
+                      )}
+                      {(!analysisResults.gap_analysis.missing_important_skills || analysisResults.gap_analysis.missing_important_skills.length === 0) &&
+                       (!analysisResults.gap_analysis.missing_skills || analysisResults.gap_analysis.missing_skills.length === 0) && (
+                        <div className="gap-section">
+                          <p className="gap-info">No significant skill gaps identified. Your resume skills align well with the target career!</p>
                         </div>
                       )}
                     </>

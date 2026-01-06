@@ -281,6 +281,19 @@ class ResumeService:
         Returns:
             Dictionary with gap analysis
         """
+        # Generic O*NET skills that are not useful for gap analysis
+        # These are fundamental skills required for almost all jobs
+        generic_skills = {
+            'reading comprehension', 'active listening', 'writing', 'speaking',
+            'mathematics', 'critical thinking', 'active learning', 'learning strategies',
+            'monitoring', 'social perceptiveness', 'coordination', 'persuasion',
+            'negotiation', 'instructing', 'service orientation', 'complex problem solving',
+            'operations analysis', 'technology design', 'equipment selection', 'installation',
+            'programming', 'quality control analysis', 'judgment and decision making',
+            'time management', 'management of personnel resources', 'management of material resources',
+            'management of financial resources', 'systems analysis', 'systems evaluation'
+        }
+        
         # Preserve user's original input
         user_career_name = target_career_name
         
@@ -332,11 +345,20 @@ class ResumeService:
                 "error": f"Target career {target_career_id} not found"
             }
         
-        target_skills = [skill.skill_name for skill in target_catalog.skills]
+        # Get skills with importance scores for better filtering
+        target_skills_with_importance = [
+            (skill.skill_name, skill.importance or 0.0)
+            for skill in target_catalog.skills
+        ]
+        
+        # Sort by importance (descending)
+        target_skills_with_importance.sort(key=lambda x: x[1], reverse=True)
+        
+        target_skills = [skill[0] for skill in target_skills_with_importance]
         target_skills_important = [
-            skill.skill_name 
-            for skill in target_catalog.skills 
-            if skill.importance and skill.importance >= 3.5
+            skill[0] 
+            for skill in target_skills_with_importance
+            if skill[1] >= 3.5
         ]
         
         resume_skills_set = set(s.lower() for s in resume_skills)
@@ -349,17 +371,32 @@ class ResumeService:
             if skill.lower() in target_skills_set
         ]
         
-        # Important skills in target that are missing from resume
+        # Important skills in target that are missing from resume (filter out generic skills)
         missing_important = [
             skill for skill in target_skills_important 
-            if skill.lower() not in resume_skills_set
+            if skill.lower() not in resume_skills_set 
+            and skill.lower() not in generic_skills
         ]
         
-        # All skills in target that are missing
-        missing_skills = [
+        # All skills in target that are missing (filter out generic skills and prioritize by importance)
+        missing_skills_filtered = [
             skill for skill in target_skills 
-            if skill.lower() not in resume_skills_set
+            if skill.lower() not in resume_skills_set 
+            and skill.lower() not in generic_skills
         ]
+        
+        # Use OpenAI to further refine and prioritize missing skills if available
+        if self.openai_service.is_available() and missing_skills_filtered:
+            missing_skills_refined = self._refine_missing_skills_with_openai(
+                missing_skills_filtered,
+                target_career_name or target_catalog.occupation.name,
+                resume_skills
+            )
+            if missing_skills_refined:
+                missing_skills_filtered = missing_skills_refined
+        
+        # Limit to top 20 most relevant missing skills
+        missing_skills = missing_skills_filtered[:20]
         
         # Skills in resume that aren't in target (extra/irrelevant)
         extra_skills = [
@@ -383,7 +420,7 @@ class ResumeService:
             },
             "matching_skills": matching_skills,
             "missing_important_skills": missing_important,
-            "missing_skills": missing_skills[:20],  # Limit to top 20
+            "missing_skills": missing_skills,
             "extra_skills": extra_skills,
             "coverage_percentage": round(coverage, 1),
             "summary": {
@@ -394,6 +431,96 @@ class ResumeService:
                 "missing_important_count": len(missing_important)
             }
         }
+    
+    def _refine_missing_skills_with_openai(
+        self,
+        missing_skills: List[str],
+        target_career_name: str,
+        resume_skills: List[str]
+    ) -> Optional[List[str]]:
+        """
+        Use OpenAI to refine and prioritize missing skills, filtering out generic ones
+        and focusing on skills that are actually relevant for career transition.
+        
+        Privacy: Only skill names are processed, no full resume content.
+        """
+        if not missing_skills or not self.openai_service.is_available():
+            return None
+        
+        try:
+            # Limit to top 30 skills to avoid token limits
+            skills_to_analyze = missing_skills[:30]
+            resume_skills_sample = resume_skills[:10] if resume_skills else []
+            
+            prompt = f"""You're analyzing skills gaps for someone transitioning to a {target_career_name} role.
+
+Current resume skills (sample): {', '.join(resume_skills_sample) if resume_skills_sample else 'None listed'}
+
+Missing skills from target career:
+{chr(10).join(f"- {skill}" for skill in skills_to_analyze)}
+
+Filter and prioritize these missing skills to show ONLY the most relevant and actionable ones for career transition. 
+Remove:
+1. Generic skills that apply to almost all jobs (like "Reading Comprehension", "Active Listening")
+2. Skills that are too vague or not actionable
+3. Skills that are unlikely to be relevant for this specific career transition
+
+Keep only:
+1. Specific, technical, or domain-specific skills
+2. Skills that are actually learnable/attainable
+3. Skills that would make a meaningful difference in this career transition
+
+Return a JSON array of the top 15 most relevant skills, in order of priority:
+{{"relevant_skills": ["skill1", "skill2", ...]}}
+
+Return ONLY valid JSON, no other text."""
+
+            max_tokens_param = self.openai_service.get_max_tokens_param(settings.OPENAI_MODEL, 300)
+            response = self.openai_service._call_with_retry(
+                lambda: self.openai_service.client.chat.completions.create(
+                    model=settings.OPENAI_MODEL,
+                    messages=[
+                        {"role": "system", "content": "You're a career transition expert. Filter and prioritize skills for career gaps analysis. Return only valid JSON."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    **max_tokens_param,
+                    temperature=0.5,
+                    response_format={"type": "json_object"}
+                )
+            )
+            
+            if response is None:
+                return None
+            
+            import json
+            result_text = response.choices[0].message.content.strip()
+            
+            # Clean up markdown code blocks if present
+            if result_text.startswith("```json"):
+                result_text = result_text[7:]
+            elif result_text.startswith("```"):
+                result_text = result_text[3:]
+            if result_text.endswith("```"):
+                result_text = result_text[:-3]
+            result_text = result_text.strip()
+            
+            result = json.loads(result_text)
+            refined_skills = result.get("relevant_skills", [])
+            
+            # Validate that refined skills are from the original list (case-insensitive)
+            original_lower = {s.lower(): s for s in missing_skills}
+            validated_skills = []
+            for skill in refined_skills:
+                skill_lower = skill.lower()
+                if skill_lower in original_lower:
+                    validated_skills.append(original_lower[skill_lower])
+            
+            return validated_skills if validated_skills else None
+            
+        except Exception as e:
+            # Privacy: Never log skill names in exceptions
+            # Fallback to original list if OpenAI fails
+            return None
     
     def rewrite_bullets(
         self, 

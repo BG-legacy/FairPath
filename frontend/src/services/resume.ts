@@ -55,13 +55,28 @@ export interface ResumeStructure {
 }
 
 export interface GapAnalysis {
+  target_career?: {
+    career_id: string;
+    name: string;
+  };
+  missing_important_skills?: string[];
   missing_skills?: string[];
+  matching_skills?: string[];
   recommended_skills?: string[];
+  extra_skills?: string[];
   skill_gaps?: Array<{
     skill: string;
     importance: number;
     gap_level: 'low' | 'medium' | 'high';
   }>;
+  coverage_percentage?: number;
+  summary?: {
+    resume_skills_count: number;
+    target_skills_count: number;
+    target_important_count: number;
+    matching_count: number;
+    missing_important_count: number;
+  };
   error?: string;
   [key: string]: any;
 }
