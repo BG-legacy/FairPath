@@ -38,26 +38,29 @@ RUN useradd -m -u 1000 appuser && \
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy application code
+# Copy application code and startup script
 COPY --chown=appuser:appuser . .
+COPY --chown=appuser:appuser start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Switch to non-root user
 USER appuser
 
-# Expose port
+# Expose port (Render will use PORT env var, but we expose 8000 as default)
 EXPOSE 8000
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Health check
+# Health check (uses PORT env var with fallback to 8000)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD-SHELL "curl -f http://localhost:${PORT:-8000}/health || exit 1"
 
 # Production entrypoint with single worker for memory-constrained environments
 # Use 1 worker to reduce memory usage (each worker loads models/data separately)
-# Can be overridden via environment variable WEB_CONCURRENCY if needed
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--access-log", "--log-level", "info"]
+# Reads PORT from environment variable (Render sets this automatically)
+# Falls back to 8000 if PORT is not set
+CMD ["/app/start.sh"]
 
 
