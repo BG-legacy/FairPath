@@ -5,7 +5,8 @@
 
 /**
  * Get the API base URL from environment variables
- * Defaults to http://localhost:8000 for development
+ * Defaults to http://localhost:8000 for local development
+ * Set VITE_API_BASE_URL in .env file for production (e.g., Heroku backend)
  */
 export const getApiBaseUrl = (): string => {
   return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';

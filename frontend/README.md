@@ -41,13 +41,23 @@ npm run preview
 
 ## Configuration
 
-The frontend is configured to connect to the backend API running on `http://localhost:8000` by default.
+### API Base URL
 
-You can override this by creating a `.env` file:
+The frontend is configured to connect to the backend API. By default, it uses `http://localhost:8000` for local development.
 
+**For Production (Heroku):**
+The `.env` file is configured to use the Heroku backend:
+```env
+VITE_API_BASE_URL=https://fairpath-01638745e0c5.herokuapp.com
+```
+
+**For Local Development:**
+If you want to use a local backend, create a `.env.local` file:
 ```env
 VITE_API_BASE_URL=http://localhost:8000
 ```
+
+The `.env.example` file shows the default local development configuration.
 
 ## Project Structure
 
@@ -75,8 +85,10 @@ frontend/
 
 ## Backend Integration
 
-The frontend communicates with the FastAPI backend running on port 8000. The Vite dev server is configured with a proxy to forward `/api` requests to the backend.
+The frontend communicates with the FastAPI backend. 
 
-Make sure the backend server is running before starting the frontend for full functionality.
+**Production:** The frontend is configured to use the Heroku backend at `https://fairpath-01638745e0c5.herokuapp.com` (set in `.env`).
+
+**Local Development:** The Vite dev server is configured with a proxy to forward `/api` requests to `http://localhost:8000`. Make sure the backend server is running before starting the frontend for full functionality.
 
 
