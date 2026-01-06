@@ -137,7 +137,8 @@ async def analyze_resume(
                 gap_analysis = resume_service.analyze_gaps(
                     detected_skills, 
                     target_career_id=target_career_id,
-                    target_career_name=target_career_name
+                    target_career_name=target_career_name,
+                    resume_text=extracted_text
                 )
                 if "error" in gap_analysis:
                     # Don't fail the whole request if gap analysis fails

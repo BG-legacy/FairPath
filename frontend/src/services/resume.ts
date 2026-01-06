@@ -68,7 +68,9 @@ export interface GapAnalysis {
     skill: string;
     importance: number;
     gap_level: 'low' | 'medium' | 'high';
+    explanation?: string;
   }>;
+  analysis_explanation?: string;
   coverage_percentage?: number;
   summary?: {
     resume_skills_count: number;

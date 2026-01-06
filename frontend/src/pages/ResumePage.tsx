@@ -491,6 +491,11 @@ function ResumePage(): JSX.Element {
                               </span>
                             )}
                           </p>
+                          {analysisResults.gap_analysis.analysis_explanation && (
+                            <div className="gap-explanation">
+                              <p>{analysisResults.gap_analysis.analysis_explanation}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                       {analysisResults.gap_analysis.missing_important_skills && analysisResults.gap_analysis.missing_important_skills.length > 0 && (
@@ -546,13 +551,18 @@ function ResumePage(): JSX.Element {
                       )}
                       {analysisResults.gap_analysis.skill_gaps && analysisResults.gap_analysis.skill_gaps.length > 0 && (
                         <div className="gap-section">
-                          <h4 className="gap-title">Skill Gaps:</h4>
+                          <h4 className="gap-title">Detailed Skill Gaps:</h4>
                           <ul className="gap-list">
                             {analysisResults.gap_analysis.skill_gaps.map((gap, index) => (
                               <li key={index} className={`gap-item ${gap.gap_level}`}>
-                                <span className="gap-skill">{gap.skill}</span>
-                                <span className="gap-importance">Importance: {gap.importance.toFixed(1)}</span>
-                                <span className={`gap-level ${gap.gap_level}`}>{gap.gap_level}</span>
+                                <div className="gap-item-content">
+                                  <span className="gap-skill">{gap.skill}</span>
+                                  <span className="gap-importance">Importance: {gap.importance.toFixed(1)}</span>
+                                  <span className={`gap-level ${gap.gap_level}`}>{gap.gap_level}</span>
+                                </div>
+                                {gap.explanation && (
+                                  <p className="gap-explanation-text">{gap.explanation}</p>
+                                )}
                               </li>
                             ))}
                           </ul>

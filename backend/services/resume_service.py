@@ -265,18 +265,19 @@ class ResumeService:
         self, 
         resume_skills: List[str], 
         target_career_id: Optional[str] = None,
-        target_career_name: Optional[str] = None
+        target_career_name: Optional[str] = None,
+        resume_text: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Analyze skills gaps between resume and target career
+        Analyze skills gaps between resume and target career using OpenAI for accuracy
         
-        Privacy: Only skill names (not full resume content) are processed in-memory.
-        No logging, no storage.
+        Privacy: Resume content is processed in-memory only, never logged or stored.
         
         Args:
             resume_skills: List of skills detected in resume (in-memory only)
             target_career_id: Career ID of target occupation (optional if target_career_name provided)
             target_career_name: Target career name/description (optional if target_career_id provided)
+            resume_text: Optional full resume text for context (in-memory only)
             
         Returns:
             Dictionary with gap analysis
@@ -385,16 +386,43 @@ class ResumeService:
             and skill.lower() not in generic_skills
         ]
         
-        # Use OpenAI to further refine and prioritize missing skills if available
-        if self.openai_service.is_available() and missing_skills_filtered:
-            missing_skills_refined = self._refine_missing_skills_with_openai(
-                missing_skills_filtered,
-                target_career_name or target_catalog.occupation.name,
-                resume_skills
+        # Use OpenAI to generate comprehensive gap analysis if available
+        if self.openai_service.is_available():
+            openai_analysis = self._generate_openai_gap_analysis(
+                resume_skills=resume_skills,
+                resume_text=resume_text,
+                target_career_name=display_name,
+                target_catalog=target_catalog,
+                matching_skills=matching_skills,
+                missing_important=missing_important,
+                missing_skills_filtered=missing_skills_filtered
             )
-            if missing_skills_refined:
-                missing_skills_filtered = missing_skills_refined
+            
+            if openai_analysis:
+                # Merge OpenAI analysis with catalog-based analysis
+                return {
+                    "target_career": {
+                        "career_id": target_career_id,
+                        "name": display_name
+                    },
+                    "matching_skills": matching_skills,
+                    "missing_important_skills": openai_analysis.get("missing_important_skills", missing_important),
+                    "missing_skills": openai_analysis.get("missing_skills", missing_skills_filtered[:20]),
+                    "recommended_skills": openai_analysis.get("recommended_skills", []),
+                    "skill_gaps": openai_analysis.get("skill_gaps", []),
+                    "analysis_explanation": openai_analysis.get("explanation", ""),
+                    "extra_skills": extra_skills,
+                    "coverage_percentage": round(coverage, 1),
+                    "summary": {
+                        "resume_skills_count": len(resume_skills),
+                        "target_skills_count": len(target_skills),
+                        "target_important_count": len(target_skills_important),
+                        "matching_count": len(matching_skills),
+                        "missing_important_count": len(openai_analysis.get("missing_important_skills", missing_important))
+                    }
+                }
         
+        # Fallback to catalog-based analysis if OpenAI is not available
         # Limit to top 20 most relevant missing skills
         missing_skills = missing_skills_filtered[:20]
         
@@ -520,6 +548,141 @@ Return ONLY valid JSON, no other text."""
         except Exception as e:
             # Privacy: Never log skill names in exceptions
             # Fallback to original list if OpenAI fails
+            return None
+    
+    def _generate_openai_gap_analysis(
+        self,
+        resume_skills: List[str],
+        resume_text: Optional[str],
+        target_career_name: str,
+        target_catalog: OccupationCatalog,
+        matching_skills: List[str],
+        missing_important: List[str],
+        missing_skills_filtered: List[str]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Use OpenAI to generate a comprehensive, accurate gap analysis.
+        
+        Privacy: Only skill names and resume text are processed in-memory.
+        No logging, no storage.
+        """
+        if not self.openai_service.is_available():
+            return None
+        
+        try:
+            # Get target career information
+            target_skills_all = [skill.skill_name for skill in target_catalog.skills]
+            target_skills_important = [
+                skill.skill_name 
+                for skill in target_catalog.skills 
+                if skill.importance and skill.importance >= 3.5
+            ]
+            
+            # Prepare resume context (limit length to avoid token limits)
+            resume_context = ""
+            if resume_text:
+                # Take first 2000 characters for context
+                resume_context = resume_text[:2000] + ("..." if len(resume_text) > 2000 else "")
+            else:
+                resume_context = f"Resume skills: {', '.join(resume_skills[:20])}"
+            
+            # Build prompt for comprehensive gap analysis
+            prompt = f"""You're a career transition expert analyzing skills gaps for someone transitioning to a {target_career_name} role.
+
+RESUME CONTEXT:
+{resume_context}
+
+CURRENT RESUME SKILLS:
+{', '.join(resume_skills[:30]) if resume_skills else 'None detected'}
+
+TARGET CAREER: {target_career_name}
+TARGET CAREER DESCRIPTION: {target_catalog.occupation.description[:500] if target_catalog.occupation.description else 'N/A'}
+
+IMPORTANT SKILLS FOR THIS CAREER:
+{', '.join(target_skills_important[:20]) if target_skills_important else 'N/A'}
+
+MATCHING SKILLS (already in resume):
+{', '.join(matching_skills[:10]) if matching_skills else 'None'}
+
+MISSING IMPORTANT SKILLS (from catalog):
+{', '.join(missing_important[:15]) if missing_important else 'None'}
+
+Analyze the gap between the resume and the target career. Generate a comprehensive gap analysis that:
+
+1. Identifies the MOST RELEVANT and ACTIONABLE missing skills for this specific career transition
+2. Filters out generic skills that apply to all jobs (like "Reading Comprehension", "Active Listening", "Critical Thinking")
+3. Focuses on domain-specific, technical, or career-specific skills that would actually matter
+4. Provides skill gaps with importance levels and explanations
+5. Recommends skills that are learnable and would make a meaningful difference
+
+Return a JSON object with this structure:
+{{
+  "missing_important_skills": ["skill1", "skill2", ...],  // Top 10-15 most critical missing skills
+  "missing_skills": ["skill1", "skill2", ...],  // Additional relevant missing skills (top 15-20)
+  "recommended_skills": ["skill1", "skill2", ...],  // Skills to develop for this transition (top 10)
+  "skill_gaps": [
+    {{
+      "skill": "Skill Name",
+      "importance": 4.5,  // 1-5 scale
+      "gap_level": "high",  // "low", "medium", or "high"
+      "explanation": "Brief explanation of why this skill matters for this career"
+    }}
+  ],
+  "explanation": "Brief overall explanation of the gap analysis and transition feasibility"
+}}
+
+IMPORTANT:
+- Only include skills that are SPECIFIC and RELEVANT to {target_career_name}
+- Exclude generic skills that everyone needs (reading, writing, basic communication, etc.)
+- Focus on skills that would actually help someone transition to this career
+- Be realistic about what skills are learnable vs. require formal education
+- Prioritize skills that would make the biggest impact
+
+Return ONLY valid JSON, no markdown, no code blocks."""
+
+            max_tokens_param = self.openai_service.get_max_tokens_param(settings.OPENAI_MODEL, 1500)
+            response = self.openai_service._call_with_retry(
+                lambda: self.openai_service.client.chat.completions.create(
+                    model=settings.OPENAI_MODEL,
+                    messages=[
+                        {"role": "system", "content": "You're a career transition expert. Analyze skills gaps accurately and provide actionable insights. Return only valid JSON."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    **max_tokens_param,
+                    temperature=0.6,
+                    response_format={"type": "json_object"}
+                )
+            )
+            
+            if response is None:
+                return None
+            
+            import json
+            result_text = response.choices[0].message.content.strip()
+            
+            # Clean up markdown code blocks if present
+            if result_text.startswith("```json"):
+                result_text = result_text[7:]
+            elif result_text.startswith("```"):
+                result_text = result_text[3:]
+            if result_text.endswith("```"):
+                result_text = result_text[:-3]
+            result_text = result_text.strip()
+            
+            result = json.loads(result_text)
+            
+            # Validate and structure the response
+            return {
+                "missing_important_skills": result.get("missing_important_skills", [])[:15],
+                "missing_skills": result.get("missing_skills", [])[:20],
+                "recommended_skills": result.get("recommended_skills", [])[:10],
+                "skill_gaps": result.get("skill_gaps", [])[:20],
+                "explanation": result.get("explanation", "")
+            }
+            
+        except Exception as e:
+            # Privacy: Never log resume content in exceptions
+            # Fallback to catalog-based analysis if OpenAI fails
             return None
     
     def rewrite_bullets(
