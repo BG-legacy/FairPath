@@ -776,11 +776,14 @@ class CareerRecommendationService:
                         alternatives.append(alt)
         
         # Enhance each recommendation with confidence bands and formatted explainability
+        # Limit OpenAI enhancements to top 2-3 to avoid timeout (Heroku has 30s limit)
         enhanced_primary = []
-        for rec in primary_recommendations:
+        max_enhancements = 3  # Only enhance top 3 to stay within timeout
+        for idx, rec in enumerate(primary_recommendations):
             # Add OpenAI enhancement for explanations BEFORE formatting
             # This allows _build_why_narrative to use the OpenAI content
-            if use_openai and self.openai_service.is_available() and not rec.get("openai_generated"):
+            # Only enhance top recommendations to avoid timeout
+            if use_openai and self.openai_service.is_available() and not rec.get("openai_generated") and idx < max_enhancements:
                 try:
                     enhanced_explanation = self.openai_service.enhance_recommendation_explanation(
                         career_name=rec.get("name", ""),
