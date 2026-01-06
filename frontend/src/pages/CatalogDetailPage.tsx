@@ -264,3 +264,4 @@ function CatalogDetailPage(): JSX.Element {
 export default CatalogDetailPage;
 
 
+
