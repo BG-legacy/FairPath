@@ -12,6 +12,10 @@ FairPath addresses the critical problem of biased career recommendations that pe
 - **Including confidence bands and uncertainty ranges** to set appropriate expectations
 - **Offering model cards and trust panels** for full transparency
 
+## Demo Video
+
+🎥 **[Watch the FairPath Demo Video](https://drive.google.com/file/d/1BZ9lHSwhshdaLhKLFLXMl3kfKLZpDjCF/view?usp=drive_link)**
+
 ## How FairPath Aligns with Responsible AI
 
 ### 🎯 **Fairness**
@@ -189,7 +193,7 @@ FairPath/
 - **Career Switching**: Identify skill overlaps for career transitions
 
 ### 📊 Technical Features
-- **ML + Baseline Fallback**: ML model with deterministic baseline backup
+- **ML-Powered Recommendations**: ML model trained on data to provide better, more accurate results 
 - **Lazy Loading**: Memory-efficient model loading
 - **Rate Limiting**: API protection against abuse
 - **Comprehensive Testing**: 90%+ test coverage
@@ -207,19 +211,7 @@ FairPath/
 
 See `backend/README.md` for complete API documentation.
 
-## Team Members & Contributions
 
-### [Your Name/Team Name]
-- **Role**: [Primary Developer / Full-Stack Developer / etc.]
-- **Contributions**:
-  - Designed and implemented the Responsible AI guardrails system
-  - Built the ML recommendation engine with explainability features
-  - Developed the FastAPI backend with comprehensive test coverage
-  - Created the React frontend with TypeScript
-  - Implemented trust panel and model cards for transparency
-  - Set up deployment infrastructure (Heroku)
-
-*Note: Please update this section with your actual team information and contributions.*
 
 ## Additional Resources
 
@@ -229,7 +221,7 @@ See `backend/README.md` for complete API documentation.
 
 ## License
 
-[Add your license here]
+
 
 ## Acknowledgments
 
