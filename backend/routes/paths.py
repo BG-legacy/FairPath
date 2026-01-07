@@ -62,3 +62,4 @@ async def get_education_paths(career_id: str):
 
 
 
+
