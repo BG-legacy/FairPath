@@ -348,57 +348,8 @@ class ResumeService:
                 "error": f"Target career {target_career_id} not found"
             }
         
-        # Get skills with importance scores for better filtering
-        target_skills_with_importance = [
-            (skill.skill_name, skill.importance or 0.0)
-            for skill in target_catalog.skills
-        ]
-        
-        # Sort by importance (descending)
-        target_skills_with_importance.sort(key=lambda x: x[1], reverse=True)
-        
-        target_skills = [skill[0] for skill in target_skills_with_importance]
-        target_skills_important = [
-            skill[0] 
-            for skill in target_skills_with_importance
-            if skill[1] >= 3.5
-        ]
-        
-        resume_skills_set = set(s.lower() for s in resume_skills)
-        target_skills_set = set(s.lower() for s in target_skills)
-        target_important_set = set(s.lower() for s in target_skills_important)
-        
-        # Skills in resume that match target
-        matching_skills = [
-            skill for skill in resume_skills 
-            if skill.lower() in target_skills_set
-        ]
-        
-        # Important skills in target that are missing from resume (filter out generic skills)
-        missing_important = [
-            skill for skill in target_skills_important 
-            if skill.lower() not in resume_skills_set 
-            and skill.lower() not in generic_skills
-        ]
-        
-        # All skills in target that are missing (filter out generic skills and prioritize by importance)
-        missing_skills_filtered = [
-            skill for skill in target_skills 
-            if skill.lower() not in resume_skills_set 
-            and skill.lower() not in generic_skills
-        ]
-        
-        # Skills in resume that aren't in target (extra/irrelevant)
-        extra_skills = [
-            skill for skill in resume_skills 
-            if skill.lower() not in target_skills_set
-        ]
-        
-        # Calculate coverage percentage
-        if target_important_set:
-            coverage = (len([s for s in resume_skills if s.lower() in target_important_set]) / len(target_important_set)) * 100
-        else:
-            coverage = 0.0
+        # Skip catalog-based matching - let OpenAI handle all skill matching intelligently
+        # We'll only use catalog for career info, not for skill matching
         
         # Use matched career name from OpenAI validation if available, otherwise use catalog name
         # If user provided career name and we validated it, use the matched career name
@@ -407,71 +358,68 @@ class ResumeService:
         else:
             display_name = target_catalog.occupation.name
         
-        # Determine if this is a poor match (0% coverage means no skills match)
-        is_poor_match = coverage == 0.0 and len(matching_skills) == 0
-        
-        # Use OpenAI to generate comprehensive gap analysis if available
+        # Use OpenAI to generate comprehensive gap analysis - no catalog matching
         if self.openai_service.is_available():
             openai_analysis = self._generate_openai_gap_analysis(
                 resume_skills=resume_skills,
                 resume_text=resume_text,
                 target_career_name=display_name,
                 target_catalog=target_catalog,
-                matching_skills=matching_skills,
-                missing_important=missing_important,
-                missing_skills_filtered=missing_skills_filtered
+                matching_skills=[],  # Empty - OpenAI will match intelligently
+                missing_important=[],  # Empty - OpenAI will identify missing skills
+                missing_skills_filtered=[]  # Empty - OpenAI will identify all missing skills
             )
             
             if openai_analysis:
-                # Merge OpenAI analysis with catalog-based analysis
+                # Get all skill information from OpenAI analysis
+                verified_matching_skills = openai_analysis.get("matching_skills_verified", [])
+                missing_important_skills = openai_analysis.get("missing_important_skills", [])
+                missing_skills = openai_analysis.get("missing_skills", [])
+                
+                # Calculate coverage based on OpenAI's matching
+                if missing_important_skills:
+                    # Coverage = (total needed - missing) / total needed * 100
+                    # We estimate total needed from missing + matching
+                    total_important_needed = len(missing_important_skills) + len(verified_matching_skills)
+                    if total_important_needed > 0:
+                        coverage = (len(verified_matching_skills) / total_important_needed) * 100
+                    else:
+                        coverage = 100.0  # If no missing skills, they have everything
+                else:
+                    coverage = 100.0  # If no missing important skills, coverage is high
+                
+                # Determine if this is a poor match
+                is_poor_match = coverage == 0.0 and len(verified_matching_skills) == 0 and len(missing_important_skills) > 0
+                
+                # Use OpenAI analysis entirely - no catalog matching
                 result = {
                     "target_career": {
                         "career_id": target_career_id,
                         "name": display_name,
                         "user_input": user_career_name if user_career_name else None
                     },
-                    "matching_skills": matching_skills,
-                    "missing_important_skills": openai_analysis.get("missing_important_skills", missing_important),
-                    "missing_skills": openai_analysis.get("missing_skills", missing_skills_filtered[:20]),
+                    "matching_skills": verified_matching_skills,
+                    "missing_important_skills": missing_important_skills,
+                    "missing_skills": missing_skills,
                     "recommended_skills": openai_analysis.get("recommended_skills", []),
                     "skill_gaps": openai_analysis.get("skill_gaps", []),
                     "analysis_explanation": openai_analysis.get("explanation", ""),
-                    "extra_skills": extra_skills,
+                    "extra_skills": [],  # OpenAI will identify if needed
                     "coverage_percentage": round(coverage, 1),
                     "is_poor_match": is_poor_match,
                     "summary": {
                         "resume_skills_count": len(resume_skills),
-                        "target_skills_count": len(target_skills),
-                        "target_important_count": len(target_skills_important),
-                        "matching_count": len(matching_skills),
-                        "missing_important_count": len(openai_analysis.get("missing_important_skills", missing_important))
+                        "target_skills_count": len(missing_important_skills) + len(verified_matching_skills),  # Estimated from OpenAI
+                        "target_important_count": len(missing_important_skills) + len(verified_matching_skills),
+                        "matching_count": len(verified_matching_skills),
+                        "missing_important_count": len(missing_important_skills)
                     }
                 }
                 return result
         
-        # Fallback to catalog-based analysis if OpenAI is not available
-        # Limit to top 20 most relevant missing skills
-        missing_skills = missing_skills_filtered[:20]
-        
+        # Fallback: If OpenAI is not available, return error
         return {
-            "target_career": {
-                "career_id": target_career_id,
-                "name": display_name,
-                "user_input": user_career_name if user_career_name else None
-            },
-            "matching_skills": matching_skills,
-            "missing_important_skills": missing_important,
-            "missing_skills": missing_skills,
-            "extra_skills": extra_skills,
-            "coverage_percentage": round(coverage, 1),
-            "is_poor_match": is_poor_match,
-            "summary": {
-                "resume_skills_count": len(resume_skills),
-                "target_skills_count": len(target_skills),
-                "target_important_count": len(target_skills_important),
-                "matching_count": len(matching_skills),
-                "missing_important_count": len(missing_important)
-            }
+            "error": "OpenAI service is required for gap analysis. Please configure OPENAI_API_KEY."
         }
     
     def _refine_missing_skills_with_openai(
@@ -584,13 +532,7 @@ Return ONLY valid JSON, no other text."""
             return None
         
         try:
-            # Get target career information
-            target_skills_all = [skill.skill_name for skill in target_catalog.skills]
-            target_skills_important = [
-                skill.skill_name 
-                for skill in target_catalog.skills 
-                if skill.importance and skill.importance >= 3.5
-            ]
+            # No catalog-based skill extraction - OpenAI will identify all skills
             
             # Prepare resume context (limit length to avoid token limits)
             resume_context = ""
@@ -612,45 +554,58 @@ CURRENT RESUME SKILLS:
 TARGET CAREER: {target_career_name}
 TARGET CAREER DESCRIPTION: {target_catalog.occupation.description[:500] if target_catalog.occupation.description else 'N/A'}
 
-IMPORTANT SKILLS FOR THIS CAREER:
-{', '.join(target_skills_important[:20]) if target_skills_important else 'N/A'}
 
-MATCHING SKILLS (already in resume):
-{', '.join(matching_skills[:10]) if matching_skills else 'None'}
 
-MISSING IMPORTANT SKILLS (from catalog):
-{', '.join(missing_important[:15]) if missing_important else 'None'}
+CRITICAL INSTRUCTIONS - You are an expert with knowledge of ALL careers. Use your expertise to:
 
-Analyze the gap between the resume and the target career. Generate a comprehensive gap analysis that:
+1. **INTELLIGENTLY MATCH RESUME SKILLS**: Don't just look for exact matches. Understand the meaning and context:
+   - "React" or "JavaScript" → Programming, Software Development, Web Development
+   - "Teaching" or "Training" → Instruction, Learning Strategies, Curriculum Development
+   - "Project Management" → Coordination, Time Management, Management of Personnel Resources
+   - Analyze the resume context to understand what skills the person actually has
 
-1. Identifies the MOST RELEVANT and ACTIONABLE missing skills for this specific career transition
-2. Filters out generic skills that apply to all jobs (like "Reading Comprehension", "Active Listening", "Critical Thinking")
-3. Focuses on domain-specific, technical, or career-specific skills that would actually matter
-4. Provides skill gaps with importance levels and explanations
-5. Recommends skills that are learnable and would make a meaningful difference
+2. **GENERATE ACCURATE SKILL LISTS**: Based on {target_career_name}, identify the REAL skills needed using YOUR EXPERT KNOWLEDGE:
+   - For TEACHING roles: Teaching/Instruction, Curriculum Development, Classroom Management, Student Assessment, Lesson Planning, Educational Technology
+   - For TECHNICAL roles: Programming, Systems Analysis, Troubleshooting, Technology Design
+   - For BUSINESS roles: Management, Coordination, Planning, Negotiation
+   - Use your expertise to determine what skills are ACTUALLY needed for this career
+
+4. **FILTER IRRELEVANT SKILLS**: 
+   - Remove generic skills: "Reading Comprehension", "Active Listening", "Critical Thinking"
+   - Remove skills that clearly don't belong: "Equipment Maintenance" for office jobs, "Classroom Management" for non-teaching roles
+   - Keep only skills that are SPECIFIC and ACTIONABLE for {target_career_name}
+
+5. **MATCH RESUME TO CAREER**: Intelligently map resume skills to career requirements:
+   - Look for semantic matches, not just keyword matches
+   - Understand skill transferability (e.g., "project management" skills transfer to many roles)
+   - Identify which resume skills are relevant to the target career
 
 Return a JSON object with this structure:
 {{
-  "missing_important_skills": ["skill1", "skill2", ...],  // Top 10-15 most critical missing skills
-  "missing_skills": ["skill1", "skill2", ...],  // Additional relevant missing skills (top 15-20)
-  "recommended_skills": ["skill1", "skill2", ...],  // Skills to develop for this transition (top 10)
+  "matching_skills_verified": ["skill1", "skill2", ...],  // OPTIONAL: Improved/verified list of matching skills from resume (intelligently matched)
+  "missing_important_skills": ["skill1", "skill2", ...],  // Top 10-15 most critical missing skills - USE YOUR KNOWLEDGE to ensure accuracy
+  "missing_skills": ["skill1", "skill2", ...],  // Additional relevant missing skills (top 15-20) - verify they make sense
+  "recommended_skills": ["skill1", "skill2", ...],  // Skills to develop for this transition (top 10) - be specific and actionable
   "skill_gaps": [
     {{
-      "skill": "Skill Name",
-      "importance": 4.5,  // 1-5 scale
-      "gap_level": "high",  // "low", "medium", or "high"
-      "explanation": "Brief explanation of why this skill matters for this career"
+      "skill": "Skill Name",  // Use accurate skill names that actually matter for this career
+      "importance": 4.5,  // 1-5 scale based on how critical this skill is for {target_career_name}
+      "gap_level": "high",  // "low", "medium", or "high" based on how much they need this skill
+      "explanation": "Brief explanation of why this skill matters for this career - be specific"
     }}
   ],
-  "explanation": "Brief overall explanation of the gap analysis and transition feasibility"
+  "explanation": "Brief overall explanation of the gap analysis and transition feasibility based on your expert knowledge of this career."
 }}
 
-IMPORTANT:
-- Only include skills that are SPECIFIC and RELEVANT to {target_career_name}
+CRITICAL REQUIREMENTS:
+- DO NOT blindly use catalog skills if they don't make sense for {target_career_name}
+- USE YOUR EXPERT KNOWLEDGE of {target_career_name} to suggest the CORRECT skills needed
+- Only include skills that are SPECIFIC, RELEVANT, and ACTIONABLE for {target_career_name}
 - Exclude generic skills that everyone needs (reading, writing, basic communication, etc.)
 - Focus on skills that would actually help someone transition to this career
 - Be realistic about what skills are learnable vs. require formal education
 - Prioritize skills that would make the biggest impact
+- If catalog skills are wrong (e.g., "Equipment Maintenance" for a teacher), replace them with correct skills
 
 Return ONLY valid JSON, no markdown, no code blocks."""
 

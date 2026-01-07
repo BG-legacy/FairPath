@@ -698,20 +698,29 @@ IMPORTANT GUIDELINES:
    Examples:
    - "heart doctor" or "cardiologist" → "Cardiologists"
    - "software engineer" or "coder" → "Software Developers" or "Software Engineers"
-   - "teacher" or "educator" → "Elementary School Teachers" or similar
+   - "teacher" or "educator" → "Elementary School Teachers", "Secondary School Teachers", or similar TEACHING roles
+   - "history teacher" or "math teacher" → "Secondary School Teachers" (NOT "Historians" or research roles)
    - "accountant" or "bookkeeper" → "Accountants and Auditors"
    - "lawyer" or "attorney" → "Lawyers"
 
 2. Match to actual professional/practitioner roles, not administrative/management roles unless explicitly requested
    - "doctor" → match to physician roles, not "Medical and Health Services Managers"
    - "engineer" → match to engineering roles, not "Engineering Managers"
-   - "teacher" → match to teaching roles, not "Education Administrators"
+   - "teacher" or "[subject] teacher" → match to TEACHING roles (Elementary/Secondary/Middle School Teachers), NOT research roles like "Historians"
+   - If user says "teacher" or "[subject] teacher", they want a TEACHING job, not a research/academic job
 
-3. Priority order:
+3. CRITICAL: Distinguish between TEACHING roles and RESEARCH/ACADEMIC roles
+   - "[subject] teacher" (e.g., "history teacher", "math teacher") = TEACHING role in a school
+   - "Historian" or "history researcher" = RESEARCH role (studying history)
+   - If user says "teacher", they want a TEACHING job, NOT a research/academic position
+   - If the available careers list has no teaching roles but has research roles, return "NO_MATCH" rather than matching to a research role
+
+4. Priority order:
    - EXACT name match (case-insensitive)
-   - Close match based on meaning and intent
+   - Close match based on meaning and intent (considering role type: teaching vs research)
    - Partial match where the search term words appear in the career name
-   - Only if none of the above, consider the most related career
+   - ONLY if it's clearly the same type of role (teaching vs research), consider the most related career
+   - If the match would be the wrong role type, return "NO_MATCH"
 
 Available Careers:
 {careers_text}
@@ -721,7 +730,7 @@ Find the single best matching career. Return ONLY the exact career name from the
 Format your response as:
 CAREER_NAME|BRIEF_EXPLANATION
 
-If no good match exists, respond with "NO_MATCH"."""
+If no good match exists (especially if user wants a teaching role but only research roles are available), respond with "NO_MATCH"."""
 
             max_tokens_param = self.get_max_tokens_param(settings.OPENAI_MODEL, 200)
             response = self._call_with_retry(
