@@ -21,9 +21,12 @@ export const apiConfig = {
     default: 30000, // 30 seconds for general requests
     openai: 120000, // 120 seconds (2 minutes) for OpenAI endpoints - allows time for multiple API calls
     upload: 60000, // 60 seconds for file uploads
+    fullResumeRewrite: 300000, // 300 seconds (5 minutes) for full resume rewrites with many bullets
   },
   maxRequestSize: 1024 * 1024, // 1MB for general requests
   maxUploadSize: 10 * 1024 * 1024, // 10MB for file uploads
+  // Threshold for considering a rewrite as "full resume" (number of bullets)
+  fullResumeThreshold: 15, // If 15+ bullets, treat as full resume rewrite
 } as const;
 
 /**

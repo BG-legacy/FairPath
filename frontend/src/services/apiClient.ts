@@ -44,8 +44,29 @@ apiClient.interceptors.request.use(
     }
 
     // Set timeout based on endpoint type
-    if (config.url?.includes('/openai') || config.url?.includes('/coach') || config.url?.includes('/resume') || config.url?.includes('/recommendations')) {
+    if (config.url?.includes('/openai') || config.url?.includes('/coach') || config.url?.includes('/recommendations')) {
       config.timeout = apiConfig.timeout.openai;
+    } else if (config.url?.includes('/resume')) {
+      // For resume endpoints, check if it's a rewrite request with many bullets (full resume)
+      if (config.url?.includes('/rewrite') && config.data) {
+        try {
+          const data = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+          const bullets = data?.bullets || [];
+          if (bullets.length >= apiConfig.fullResumeThreshold) {
+            // Full resume rewrite - use extended timeout
+            config.timeout = apiConfig.timeout.fullResumeRewrite;
+          } else {
+            // Regular rewrite - use standard OpenAI timeout
+            config.timeout = apiConfig.timeout.openai;
+          }
+        } catch (e) {
+          // If parsing fails, use default OpenAI timeout
+          config.timeout = apiConfig.timeout.openai;
+        }
+      } else {
+        // Other resume endpoints (analyze) - use OpenAI timeout
+        config.timeout = apiConfig.timeout.openai;
+      }
     } else if (isMultipartFormData) {
       config.timeout = apiConfig.timeout.upload;
     }
