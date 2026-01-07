@@ -257,3 +257,25 @@ async def model_cards():
     """
     return await get_model_cards()
 
+
+@app.get("/openai/status")
+async def openai_status():
+    """
+    Check OpenAI service availability and configuration
+    """
+    from services.openai_enhancement import OpenAIEnhancementService
+    from app.config import settings
+    
+    openai_service = OpenAIEnhancementService()
+    api_key_set = bool(settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.strip() and settings.OPENAI_API_KEY != "your_openai_api_key_here")
+    api_key_preview = settings.OPENAI_API_KEY[:10] + "..." if api_key_set and len(settings.OPENAI_API_KEY) > 10 else "Not set"
+    is_available = openai_service.is_available()
+    
+    return {
+        "openai_available": is_available,
+        "api_key_configured": api_key_set,
+        "api_key_preview": api_key_preview,
+        "model": settings.OPENAI_MODEL,
+        "client_initialized": openai_service.client is not None
+    }
+

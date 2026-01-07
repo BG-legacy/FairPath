@@ -20,16 +20,41 @@ class OpenAIEnhancementService:
     
     def __init__(self):
         self.client = None
-        if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY != "your_openai_api_key_here":
-            try:
-                # Initialize client - timeout handled via httpx.Timeout or in retry logic
-                self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
-            except Exception as e:
-                print(f"Warning: Could not initialize OpenAI client: {e}")
-                self.client = None
+        self._initialize_client()
+    
+    def _initialize_client(self):
+        """Initialize OpenAI client with proper error handling"""
+        api_key = getattr(settings, 'OPENAI_API_KEY', None)
+        
+        # Check if API key exists and is valid
+        if not api_key:
+            print("Warning: OPENAI_API_KEY not found in settings")
+            return
+        
+        # Strip whitespace and check if it's not a placeholder
+        api_key = api_key.strip()
+        if not api_key or api_key == "your_openai_api_key_here":
+            print("Warning: OPENAI_API_KEY is empty or placeholder value")
+            return
+        
+        # Validate key format (OpenAI keys start with 'sk-')
+        if not api_key.startswith('sk-'):
+            print(f"Warning: OPENAI_API_KEY format appears invalid (should start with 'sk-')")
+            # Still try to initialize in case of new key format
+        
+        try:
+            # Initialize client - timeout handled via httpx.Timeout or in retry logic
+            self.client = OpenAI(api_key=api_key)
+            print(f"OpenAI client initialized successfully")
+        except Exception as e:
+            print(f"Warning: Could not initialize OpenAI client: {e}")
+            self.client = None
     
     def is_available(self) -> bool:
-        """Check if OpenAI is available"""
+        """Check if OpenAI is available - re-initialize if needed"""
+        if self.client is None:
+            # Try to re-initialize in case settings were loaded after service creation
+            self._initialize_client()
         return self.client is not None
     
     @staticmethod
