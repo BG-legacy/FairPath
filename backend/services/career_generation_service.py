@@ -74,48 +74,63 @@ class CareerGenerationService:
 User Profile:
 Skills: {skills_text}{interests_text}{values_text}{constraints_text}
 
-Recommend careers that:
-1. Actually USE these specific skills (e.g., if they know Python, suggest developer/data roles)
-2. Match their interest profile
-3. Align with their work values
-4. Meet their constraints
+CRITICAL REQUIREMENTS:
+1. ONLY recommend careers that DIRECTLY USE their specific skills. If they know Python/Java/AI/ML, recommend software engineering, data science, AI engineering, ML engineer roles - NOT generic manufacturing, production management, or technician roles.
+2. For tech skills (programming, AI, ML, data science), prioritize modern tech careers: Software Engineer, Data Scientist, ML Engineer, AI Researcher, Full-Stack Developer, DevOps Engineer, etc.
+3. Match their interest profile and work values
+4. Meet their constraints (salary, remote work, etc.)
 5. Can be MODERN careers (not limited to traditional O*NET taxonomy)
 
+AVOID recommending:
+- Generic manufacturing/production roles (Industrial Production Manager, Manufacturing Technician) for people with specialized tech skills
+- Technician/technologist roles when they have professional/engineering skills
+- Roles that don't actually use their core skills
+
 For each career, provide:
-- Job title (be specific - "Frontend Developer" not just "Developer")
-- Score (0.0-1.0 based on match quality)
+- Job title (be specific - "Machine Learning Engineer" not just "Engineer")
+- Score (0.0-1.0 based on match quality - be honest, only high scores 0.85+ for excellent matches)
 - SOC code if it exists, or "MODERN" for newer roles
-- Why it's a good match (2-3 sentences, be specific about skills)
+- Why it's a good match (2-3 sentences, be SPECIFIC about which skills are used and how)
+- Key skills that are directly used in this role
+- Realistic salary range
+- Growth outlook
 
 Return ONLY valid JSON:
 {{
   "careers": [
     {{
       "name": "Career Title",
-      "score": 0.85,
+      "score": 0.92,
       "soc_code": "15-1252.00",
-      "why": "Detailed explanation...",
-      "key_skills_used": ["skill1", "skill2"],
-      "salary_range": "70k-120k",
+      "why": "Detailed explanation that specifically mentions which skills are used...",
+      "key_skills_used": ["Python", "Machine Learning", "Data Analysis"],
+      "salary_range": "100k-180k",
       "growth_outlook": "Excellent"
     }}
   ]
 }}
 
-Be honest about fit - don't force matches. Prioritize careers that actually USE their technical skills."""
+Be honest about fit - don't force matches. If their skills don't match well, give lower scores. Prioritize careers that actually USE their technical skills."""
 
         try:
+            # Use gpt-4o for better quality recommendations (primary method)
+            # Can fall back to settings.OPENAI_MODEL if needed
+            from app.config import settings
+            model = "gpt-4o"  # Use best model for primary recommendation method
+            
+            max_tokens_param = self.openai_service.get_max_tokens_param(model, 2000)
+            
             response = self.openai_service._call_with_retry(
                 lambda: self.openai_service.client.chat.completions.create(
-                    model="gpt-4o",  # Use GPT-4o (supports JSON mode, faster, cheaper than GPT-4)
+                    model=model,
                     messages=[
                         {
                             "role": "system", 
-                            "content": "You're an expert career advisor who understands modern tech careers, traditional careers, and emerging roles. Provide honest, specific recommendations. Return ONLY valid JSON."
+                            "content": "You're an expert career advisor who understands modern tech careers, traditional careers, and emerging roles. CRITICAL: For users with programming/AI/ML/data science skills, recommend tech roles (Software Engineer, Data Scientist, ML Engineer) NOT generic manufacturing or technician roles. Only recommend careers that directly use their specific skills. Be honest and specific. Return ONLY valid JSON."
                         },
                         {"role": "user", "content": prompt}
                     ],
-                    max_tokens=1500,
+                    **max_tokens_param,
                     temperature=0.7,
                     response_format={"type": "json_object"}
                 )

@@ -641,83 +641,14 @@ class CareerRecommendationService:
         Get enhanced recommendations with confidence bands, explainability, alternatives, and why narrative
         Returns 3-5 careers
         
-        If ML matches are not good enough (top score < 0.5), uses OpenAI to generate recommendations
+        PRIMARY METHOD: Uses OpenAI to generate career recommendations directly from user profile
+        FALLBACK: Uses ML/O*NET matching if OpenAI is unavailable
         """
-        # Get base recommendations - request more to have alternatives
-        base_result = self.recommend(
-            skills=skills,
-            skill_importance=skill_importance,
-            interests=interests,
-            work_values=work_values,
-            constraints=constraints,
-            top_n=8,  # Get more for alternatives
-            use_ml=use_ml,
-            use_openai=False  # Don't use OpenAI enhancement here, we'll check quality first
-        )
+        all_recommendations = []
+        method = "baseline"
         
-        all_recommendations = base_result["recommendations"]
-        
-        # Universal career detection - works for ALL fields (tech, medical, business, creative, etc.)
-        # Detect if match quality is poor or if there's a skill-career mismatch
-        use_openai_supplement = False
-        if len(all_recommendations) > 0 and skills:
-            top_recommendation = all_recommendations[0]
-            top_name = top_recommendation.get("name", "").lower()
-            top_score = top_recommendation.get("score", 0.0)
-            
-            print(f"Top recommendation: {top_recommendation.get('name')}, Score: {top_score:.4f}")
-            
-            # Strategy 1: If top score isn't high enough, get better options
-            if top_score < 0.90:
-                use_openai_supplement = True
-                print(f"Top match score is not high enough ({top_score:.2f}) - supplementing with OpenAI for better careers")
-            
-            # Strategy 2: Detect professional/specialized skills vs generic/technician matches
-            # This catches cases where user has specialized skills but got generic roles
-            has_professional_skills = any(
-                any(keyword in skill.lower() for keyword in [
-                    # Tech & IT
-                    'programming', 'software', 'developer', 'python', 'javascript', 'java',
-                    'web', 'react', 'node', 'database', 'data', 'ml', 'ai', 'cloud', 'devops',
-                    # Medical & Healthcare
-                    'medical', 'clinical', 'healthcare', 'nursing', 'patient', 'laboratory',
-                    'diagnostic', 'surgical', 'pharmacy', 'therapeutic', 'research',
-                    # Business & Finance
-                    'management', 'marketing', 'sales', 'finance', 'accounting', 'consulting',
-                    'business', 'strategy', 'analytics', 'economics', 'investment',
-                    # Science & Research
-                    'research', 'scientific', 'analysis', 'laboratory', 'statistics',
-                    'biology', 'chemistry', 'physics', 'engineering',
-                    # Creative & Design
-                    'design', 'graphics', 'art', 'creative', 'ux', 'ui', 'branding',
-                    'writing', 'editing', 'content', 'media', 'photography',
-                    # Education & Social Services
-                    'teaching', 'education', 'curriculum', 'counseling', 'social work',
-                    # Legal & Policy
-                    'legal', 'law', 'compliance', 'policy', 'regulatory'
-                ])
-                for skill in skills
-            )
-            
-            is_generic_technician = any(
-                word in top_name
-                for word in ['technician', 'technologist', 'operator', 'inspector', 
-                           'production manager', 'industrial production', 'manufacturing',
-                           'mechanical', 'assembler', 'fabricator']
-            )
-            
-            if has_professional_skills and is_generic_technician:
-                use_openai_supplement = True
-                print(f"User has professional/specialized skills but top match is generic/technician role - supplementing with OpenAI")
-            
-            # Strategy 3: User has multiple specific skills (3+ words) but got very generic match
-            specific_skills = [s for s in skills if len(s.split()) >= 2]  # Multi-word skills are more specific
-            if len(specific_skills) >= 2 and top_score < 0.95:
-                use_openai_supplement = True
-                print(f"User has specific multi-word skills but match isn't excellent - supplementing with OpenAI")
-        
-        # If we need to supplement with OpenAI-generated careers
-        if use_openai_supplement and use_openai and self.career_generation_service.openai_service.is_available():
+        # PRIMARY: Use OpenAI to generate recommendations directly
+        if use_openai and self.career_generation_service.openai_service.is_available():
             try:
                 user_profile = {
                     "skills": skills or [],
@@ -726,64 +657,63 @@ class CareerRecommendationService:
                     "constraints": constraints or {}
                 }
                 
-                # Generate careers using OpenAI (can suggest careers not in O*NET)
-                print("Generating career recommendations with OpenAI...")
+                print("Generating career recommendations with OpenAI (primary method)...")
                 openai_careers = self.career_generation_service.generate_career_recommendations(
                     user_profile=user_profile,
-                    num_recommendations=5
+                    num_recommendations=8  # Get more for alternatives
                 )
                 
-                if openai_careers:
-                    # Merge OpenAI careers with O*NET careers, prioritize by score
-                    # Pass user skills so merge can filter out nonsensical O*NET matches
-                    merged = self.career_generation_service.merge_with_onet_careers(
-                        openai_careers=openai_careers,
-                        onet_careers=all_recommendations,
-                        max_total=8,
-                        user_skills=skills
-                    )
-                    all_recommendations = merged["primary"] + merged["alternatives"]
-                    base_result["method"] = "hybrid_ml_openai"
-                    print(f"Merged {len(openai_careers)} OpenAI careers with O*NET careers")
+                if openai_careers and len(openai_careers) > 0:
+                    all_recommendations = openai_careers
+                    method = "openai_primary"
+                    print(f"Generated {len(openai_careers)} career recommendations using OpenAI")
+                else:
+                    print("OpenAI returned no recommendations, falling back to ML/O*NET")
+                    use_openai = False  # Fall back to ML
             except Exception as e:
-                print(f"OpenAI career generation failed, using ML recommendations: {e}")
-                # Continue with ML recommendations if OpenAI fails
+                print(f"OpenAI career generation failed, falling back to ML/O*NET: {e}")
+                use_openai = False  # Fall back to ML
+        
+        # FALLBACK: Use ML/O*NET matching if OpenAI is unavailable or failed
+        if not use_openai or len(all_recommendations) == 0:
+            print("Using ML/O*NET matching as fallback...")
+            base_result = self.recommend(
+                skills=skills,
+                skill_importance=skill_importance,
+                interests=interests,
+                work_values=work_values,
+                constraints=constraints,
+                top_n=8,  # Get more for alternatives
+                use_ml=use_ml,
+                use_openai=False
+            )
+            all_recommendations = base_result["recommendations"]
+            method = base_result.get("method", "baseline")
+        
+        # Build user features for response (needed for frontend)
+        user_features = self.build_user_feature_vector(
+            skills=skills,
+            skill_importance=skill_importance,
+            interests=interests,
+            work_values=work_values,
+            constraints=constraints
+        )
         
         # Take top 3-5 as primary recommendations
         primary_count = min(max(3, len(all_recommendations)), 5)
         primary_recommendations = all_recommendations[:primary_count]
         
-        # Only include alternatives if they meet HIGH quality threshold
-        # Filter out low-scoring alternatives (< 0.80) or generic/irrelevant careers
+        # Get alternatives (next 3 recommendations after primary)
         alternatives = []
         if len(all_recommendations) > primary_count:
-            potential_alternatives = all_recommendations[primary_count:primary_count + 3]
-            for alt in potential_alternatives:
-                # Only include if score is high (≥ 0.80) and not a generic/mismatched role
-                if alt.get("score", 0) >= 0.80:
-                    career_name = alt.get("name", "").lower()
-                    # Skip generic/technical roles that are likely mismatches
-                    is_generic_or_mismatch = any(
-                        word in career_name
-                        for word in ['technician', 'technologist', 'operator', 
-                                   'production', 'manufacturing', 'inspector',
-                                   'assembler', 'fabricator', 'surveyor',
-                                   'network', 'systems administrator', 'computer systems',
-                                   'mechanical', 'electrical', 'industrial',
-                                   'nuclear', 'aerospace', 'automotive']
-                    )
-                    if not is_generic_or_mismatch:
-                        alternatives.append(alt)
+            alternatives = all_recommendations[primary_count:primary_count + 3]
         
-        # Enhance each recommendation with confidence bands and formatted explainability
-        # Limit OpenAI enhancements to top 2-3 to avoid timeout (Heroku has 30s limit)
+        # Format recommendations (OpenAI-generated careers already have good explanations)
         enhanced_primary = []
-        max_enhancements = 3  # Only enhance top 3 to stay within timeout
         for idx, rec in enumerate(primary_recommendations):
-            # Add OpenAI enhancement for explanations BEFORE formatting
-            # This allows _build_why_narrative to use the OpenAI content
-            # Only enhance top recommendations to avoid timeout
-            if use_openai and self.openai_service.is_available() and not rec.get("openai_generated") and idx < max_enhancements:
+            # OpenAI-generated careers already have good "why" explanations
+            # Only enhance if it's from ML/O*NET and we want to improve the explanation
+            if method != "openai_primary" and use_openai and self.openai_service.is_available() and idx < 3:
                 try:
                     enhanced_explanation = self.openai_service.enhance_recommendation_explanation(
                         career_name=rec.get("name", ""),
@@ -797,7 +727,7 @@ class CareerRecommendationService:
                 except Exception as e:
                     print(f"OpenAI enhancement failed for {rec.get('name')}: {e}")
             
-            # Now format the recommendation (this will use the OpenAI enhancement if present)
+            # Format the recommendation
             enhanced = self._enhance_recommendation_format(rec)
             enhanced_primary.append(enhanced)
         
@@ -809,8 +739,8 @@ class CareerRecommendationService:
         return {
             "careers": enhanced_primary,
             "alternatives": enhanced_alternatives,
-            "method": base_result["method"],
-            "user_features": base_result["user_features"]
+            "method": method,
+            "user_features": user_features
         }
     
     def _enhance_recommendation_format(self, rec: Dict[str, Any]) -> Dict[str, Any]:
