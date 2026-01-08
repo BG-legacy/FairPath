@@ -1,4 +1,7 @@
 # colorstackwinterhack2025-fairpath
+<img width="2252" height="1524" alt="Screenshot 2026-01-07 at 7 00 14 PM" src="https://github.com/user-attachments/assets/e58054e4-1d8b-4473-9f4e-c79082a31ca7" />
+
+
 
 ## Description
 
